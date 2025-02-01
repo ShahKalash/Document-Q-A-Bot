@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1 viewport-fit=cover, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>Chatbot - PDF QA</title>
+</head>
+
+<body>
+    <div class="content-container">
+        <h1>Upload PDF and Ask Questions</h1>
+
+        <!-- PDF Upload Form -->
+        <div class="form-container">
+            <form id="pdf-form">
+                <input type="file" name="pdf" accept=".pdf" required />
+                <button type="submit">Upload PDF</button>
+            </form>
+        </div>
+
+        <!-- PDF Summary Display -->
+        <h2>PDF Summary</h2>
+        <div id="summary">Summary will appear here...</div>
+
+        <!-- Ask Question -->
+        <div class="question-container">
+            <input type="text" id="question" placeholder="Ask your question..." />
+            <button id="ask-button">Ask Question</button>
+        </div>
+
+        <!-- Conversation Log -->
+        <div class="conversation" id="conversation">
+            <!-- Previous Questions and Answers will appear here -->
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading" id="loading-spinner"></div>
+
+    </div>
+
+    <script src="/script.js"></script>
+</body>
+
+</html>
