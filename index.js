@@ -16,8 +16,11 @@ const port = process.env.PORT || 3000;
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'models/gemini-1.5-flash' });
 
-// Configure multer for file uploads (in-memory storage for PDFs)
-const upload = multer({ storage: multer.memoryStorage() });
+// Configure multer for file uploads with a file size limit of 10 MB
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit
+});
 
 // Middleware for parsing JSON bodies and url-encoded data
 app.use(express.json());
@@ -28,32 +31,42 @@ let pdfBuffer = null;
 let summary = "";
 
 // Endpoint to upload PDF and save it to memory
-app.post('/upload-pdf', upload.single('pdf'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No PDF file uploaded' });
-  }
+app.post('/upload-pdf', (req, res, next) => {
+  upload.single('pdf')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'File too large. Max size is 10 MB.' });
+      }
+      return res.status(400).json({ error: 'Error uploading file.' });
+    }
 
-  // Save the PDF buffer in memory
-  pdfBuffer = req.file.buffer;
+    if (!req.file) {
+      return res.status(400).json({ error: 'No PDF file uploaded' });
+    }
 
-  // Generate summary using the PDF content
-  try {
-    const result = await model.generateContent([
-      {
-        inlineData: {
-          data: pdfBuffer.toString('base64'),
-          mimeType: 'application/pdf',
-        },
-      },
-      'Summarize this document',
-    ]);
+    pdfBuffer = req.file.buffer;
 
-    summary = result.response.text ? result.response.text() : 'Summary not available';
-    res.json({ message: 'PDF uploaded and summary generated successfully', summary });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error generating summary' });
-  }
+    // Generate summary using the PDF content
+    (async () => {
+      try {
+        const result = await model.generateContent([
+          {
+            inlineData: {
+              data: pdfBuffer.toString('base64'),
+              mimeType: 'application/pdf',
+            },
+          },
+          'Summarize this document',
+        ]);
+
+        summary = result.response.text ? result.response.text() : 'Summary not available';
+        res.json({ message: 'PDF uploaded and summary generated successfully', summary });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Error generating summary' });
+      }
+    })();
+  });
 });
 
 // Endpoint to ask a question based on the uploaded PDF content
