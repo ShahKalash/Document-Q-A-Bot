@@ -4,33 +4,26 @@ import path from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
-// Load environment variables
 dotenv.config();
 
-// Initialize the Express app
 const app = express();
 app.use(express.static('public'));
 const port = process.env.PORT || 3000;
 
-// Initialize the GoogleGenerativeAI instance
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'models/gemini-1.5-flash' });
 
-// Configure multer for file uploads with a file size limit of 10 MB
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB limit
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-// Middleware for parsing JSON bodies and url-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Store the uploaded PDF buffer and the summary
 let pdfBuffer = null;
 let summary = "";
 
-// Endpoint to upload PDF and save it to memory
 app.post('/upload-pdf', (req, res, next) => {
   upload.single('pdf')(req, res, (err) => {
     if (err) {
@@ -46,7 +39,6 @@ app.post('/upload-pdf', (req, res, next) => {
 
     pdfBuffer = req.file.buffer;
 
-    // Generate summary using the PDF content
     (async () => {
       try {
         const result = await model.generateContent([
@@ -69,7 +61,6 @@ app.post('/upload-pdf', (req, res, next) => {
   });
 });
 
-// Endpoint to ask a question based on the uploaded PDF content
 app.post('/ask-question', async (req, res) => {
   try {
     const { question } = req.body;
@@ -82,7 +73,6 @@ app.post('/ask-question', async (req, res) => {
       return res.status(400).json({ error: 'No PDF uploaded' });
     }
 
-    // Send the question and PDF content to Gemini for processing
     const result = await model.generateContent([
       {
         inlineData: {
@@ -101,13 +91,11 @@ app.post('/ask-question', async (req, res) => {
   }
 });
 
-// Serve the HTML interface for file upload and asking questions
 app.get('/', (req, res) => {
   const __dirname = path.dirname(new URL(import.meta.url).pathname);
   res.sendFile(path.join(__dirname, 'interface.html'));
 });
 
-// Start the Express server
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
 });

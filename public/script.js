@@ -1,19 +1,16 @@
-let conversationHistory = []; // To keep track of questions and answers
+let conversationHistory = [];
 
-// Show loading spinner
 function showLoading() {
     document.getElementById("loading-spinner").style.display = "block";
 }
 
-// Hide loading spinner
 function hideLoading() {
     document.getElementById("loading-spinner").style.display = "none";
 }
 
-// Handle PDF Upload
 document.getElementById("pdf-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-    showLoading(); // Show loading spinner while uploading PDF
+    showLoading();
 
     const formData = new FormData();
     formData.append("pdf", document.querySelector('[name="pdf"]').files[0]);
@@ -24,16 +21,11 @@ document.getElementById("pdf-form").addEventListener("submit", async (event) => 
     });
 
     const result = await response.json();
-    hideLoading(); // Hide loading spinner after PDF is processed
+    hideLoading();
 
-    if (result.summary) {
-        document.getElementById("summary").innerText = result.summary;
-    } else {
-        document.getElementById("summary").innerText = "Error: " + result.error;
-    }
+    document.getElementById("summary").innerText = result.summary || "Error: " + result.error;
 });
 
-// Handle Question Submission
 document.getElementById("ask-button").addEventListener("click", async () => {
     const question = document.getElementById("question").value;
     if (!question) {
@@ -41,7 +33,7 @@ document.getElementById("ask-button").addEventListener("click", async () => {
         return;
     }
 
-    showLoading(); // Show loading spinner while processing question
+    showLoading();
 
     const response = await fetch("/ask-question", {
         method: "POST",
@@ -52,26 +44,18 @@ document.getElementById("ask-button").addEventListener("click", async () => {
     });
 
     const result = await response.json();
-    hideLoading(); // Hide loading spinner after processing the question
+    hideLoading();
 
     const answer = result.answer || "No answer found.";
-
-    // Add the question and answer to the conversation history
     conversationHistory.push({ question, answer });
-
-    // Update the conversation log
     updateConversationLog();
-
-    // Clear the question input
     document.getElementById("question").value = "";
 });
 
-// Update the conversation log
 function updateConversationLog() {
     const conversationElement = document.getElementById("conversation");
-    conversationElement.innerHTML = ""; // Clear current conversation
+    conversationElement.innerHTML = "";
 
-    // Loop through the conversation history and append each Q&A
     conversationHistory.forEach(({ question, answer }) => {
         const questionElement = document.createElement("p");
         questionElement.innerHTML = `<strong>Q:</strong> ${question}`;
@@ -82,6 +66,5 @@ function updateConversationLog() {
         conversationElement.appendChild(answerElement);
     });
 
-    // Scroll to the bottom to show the latest Q&A
     conversationElement.scrollTop = conversationElement.scrollHeight;
 }
